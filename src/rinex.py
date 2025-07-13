@@ -16,7 +16,6 @@ import shutil
 # PPLS
 cred = credentials.Certificate(
     "/home/ronny/gps-geodesi/asset/ppls-shift-firebase-adminsdk-61y26-a26269269d.json"
-    # ppls-shift-firebase-adminsdk-61y26-a26269269d.json
 )
 firebase_admin.initialize_app(
     cred,
