@@ -11,10 +11,12 @@ from firebase_admin import credentials, db
 import tkinter as tk
 from tkinter import font
 import time
+import shutil
 
 # PPLS
 cred = credentials.Certificate(
     "/home/ronny/gps-geodesi/asset/ppls-shift-firebase-adminsdk-61y26-a26269269d.json"
+    # ppls-shift-firebase-adminsdk-61y26-a26269269d.json
 )
 firebase_admin.initialize_app(
     cred,
@@ -33,7 +35,7 @@ output_rinex_file_nav = "/home/ronny/gps-geodesi/output.nav"
 ref = db.reference("Realtime")
 data = ref.child("base").get()
 NTRIP_SERVER = data["ntrip"]
-# NTRIP_SERVER = "ntrips://:792eke@caster.emlid.com:2101/MP17657"
+# NTRIP_SERVER = "ntrips://:833nmp@caster.emlid.com:2101/MP21121"
 # DROPBOX PARAMETER
 auth_code = "tydj37Ufg54AAAAAAAAAf8-wu05VAM_49_4-jKINzi8"
 redirect_uri = "http://localhost:8080/"
@@ -160,14 +162,18 @@ def convert_to_rinex2():
 def upload_file_to_dropbox(file_path, dropbox_path, access_token):
     # Connect to Dropbox
     dbx = dropbox.Dropbox(access_token)
-
-    # Open the file in read mode
-    with open(file_path, "rb") as file:
-        # Upload and overwrite the file in the specified Dropbox path
-        dbx.files_upload(
-            file.read(), dropbox_path, mode=dropbox.files.WriteMode("overwrite")
-        )
-        print(f"{file_path} has been updated in Dropbox at {dropbox_path}")
+    for i in range(0, 10):
+        try:
+            with open(file_path, "rb") as file:
+                # Upload and overwrite the file in the specified Dropbox path
+                dbx.files_upload(
+                    file.read(), dropbox_path, mode=dropbox.files.WriteMode("overwrite")
+                )
+                print(f"{file_path} has been updated in Dropbox at {dropbox_path}")
+            break
+        except Exception as e:
+            time.sleep(2)
+            print(f"fail {i}")
 
 
 def get_access_and_refresh_token(auth_code, redirect_uri, app_key, app_secret):
@@ -302,11 +308,18 @@ def start_base():
         ref = db.reference("Realtime")
         data = ref.child("base").get()
         callout = data["request"]
+        mode = data["mode"]
         if callout == 1:
             ref = db.reference(f"/Realtime/base/")
             data = {f"status": "Standby...."}
             ref.update(data)
-            if minute == "00" or minute == "15" or minute == "30" or minute == "45":
+            if (
+                minute == "00"
+                or minute == "15"
+                or minute == "30"
+                or minute == "45"
+                or mode == "1"
+            ):
                 run_status = 1
             else:
                 run_status = 0
@@ -320,18 +333,6 @@ def start_base():
                 interval = data["Interval"]
                 # interval = 15
                 duration = 60 * (interval - 3)  # Time in seconds
-                # print(duration)
-                # ecef_coordinates = geodetic_to_ecef(latitude, longitude, altitude)
-                # print(f"ECEF Coordinates: X={ecef_coordinates[0]} Y={ecef_coordinates[1]} Z={ecef_coordinates[2]}")
-                # X, Y, Z = ecef_coordinates
-                # ubx_payload = b'\x06\x71\x1C\x00' + to_ubx_bytes(X) + to_ubx_bytes(Y) + to_ubx_bytes(Z)
-                # ck_a = sum(ubx_payload) & 0xFF
-                # ck_b = (sum(ubx_payload) >> 8) & 0xFF
-                # ubx_message = b'\xB5\x62' + ubx_payload + bytes([ck_a, ck_b])
-                # print(f"UBX Message: {ubx_message.hex()}")
-                # with serial.Serial(device_port, 115200, timeout=2) as ser:
-                #     ser.write(ubx_message)
-                #     print("Fixed base coordinates sent to the receiver.")
                 with serial.Serial(device_port, 115200, timeout=2) as ser:
                     send_ubx_message(
                         ser, b"\xb5\x62\x06\x02\x03\x00\x02\x15\x01\x21\x91"
@@ -351,17 +352,29 @@ def start_base():
                 ref.update(data)
                 collect_raw_data(duration, NTRIP_SERVER)
                 # Convert the raw data to RINEX format
-                ref = db.reference(f"/Realtime/base/")
-                data = {f"status": "Converting...."}
                 convert_to_rinex()
                 convert_to_rinex2()
+                shutil.copy(
+                    "/home/ronny/gps-geodesi/output.obs",
+                    "/home/ronny/gps-geodesi/output1.obs",
+                )
+                shutil.copy(
+                    "/home/ronny/gps-geodesi/output.nav",
+                    "/home/ronny/gps-geodesi/output1.nav",
+                )
+                shutil.copy(
+                    "/home/ronny/gps-geodesi/output.obs",
+                    f"/home/ronny/gps-record/{filename}",
+                )
+                shutil.copy(
+                    "/home/ronny/gps-geodesi/output.nav",
+                    f"/home/ronny/gps-record/{filename_nav}",
+                )
                 new_access_token = get_access_token_from_refresh_token(
                     refresh_token, app_key, app_secret
                 )
-                local_file_path = "/home/ronny/gps-geodesi/output.obs"
-                local_file_path_nav = (
-                    "/home/ronny/gps-geodesi/output.nav"  # Path to your local .txt file
-                )
+                local_file_path = "/home/ronny/gps-geodesi/output1.obs"
+                local_file_path_nav = "/home/ronny/gps-geodesi/output1.nav"  # Path to your local .txt file
                 dropbox_destination_path = f"/GPS ZED-F9P/Base/{filename}"
                 dropbox_destination_path_nav = f"/GPS ZED-F9P/Base/{filename_nav}"  # Path in Dropbox where you want to upload
                 ref = db.reference(f"/Realtime/base/")
@@ -376,7 +389,7 @@ def start_base():
                 ref = db.reference(f"/Realtime/base")
                 data = {
                     f"obs": dropbox_destination_path,
-                    f"obnavs": dropbox_destination_path_nav,
+                    f"nav": dropbox_destination_path_nav,
                 }
                 ref.update(data)
                 ref = db.reference(f"/Realtime/base/Storage/obs")
@@ -395,6 +408,7 @@ def start_base():
             data = {f"status": "Waiting...."}
             ref.update(data)
         time.sleep(10)
+
 
 def initialize_gui():
     root_window = tk.Tk()
