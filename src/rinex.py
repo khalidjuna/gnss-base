@@ -109,20 +109,8 @@ def convert_to_rinex():
     Convert raw GNSS data to RINEX observation file using RTKLIB's convbin.
     """
     print("Converting raw data to RINEX format...")
-    convbin_command = [
-        "convbin",
-        "-v",
-        "2.11",
-        "-o",
-        f"{output_rinex_file}",
-        "-f",
-        "1",
-        "-f",
-        "2",
-        f"{output_raw_file}",
-        "-r",
-        "rtcm3",
-    ]
+    # convbin_command = ["convbin","-v","2.11","-o",f"{output_rinex_file}","-f","1","-f","2",f"{output_raw_file}","-r","rtcm3",]
+    convbin_command = ["convbin","-v","2.11","-o",f"{output_rinex_file}","-r","rtcm3", f"{output_raw_file}"]
 
     try:
         subprocess.run(convbin_command, check=True)
@@ -137,18 +125,7 @@ def convert_to_rinex2():
     Convert raw GNSS data to RINEX observation file using RTKLIB's convbin.
     """
     print("Converting raw data to RINEX format...")
-    convbin_command = [
-        "convbin",
-        "-v",
-        "2.11",
-        "-n",
-        f"{output_rinex_file_nav}",
-        "-f",
-        "1",
-        "-f",
-        "2",
-        f"{output_raw_file}",
-    ]
+    convbin_command = ["convbin","-v","2.11","-n",f"{output_rinex_file_nav}","-f","1","-f","2",f"{output_raw_file}"]
 
     try:
         subprocess.run(convbin_command, check=True)
@@ -173,7 +150,6 @@ def upload_file_to_dropbox(file_path, dropbox_path, access_token):
         except Exception as e:
             time.sleep(2)
             print(f"fail {i}")
-
 
 def get_access_and_refresh_token(auth_code, redirect_uri, app_key, app_secret):
     token_url = "https://api.dropbox.com/oauth2/token"
@@ -361,14 +337,8 @@ def start_base():
                     "/home/ronny/gps-geodesi/output.nav",
                     "/home/ronny/gps-geodesi/output1.nav",
                 )
-                shutil.copy(
-                    "/home/ronny/gps-geodesi/output.obs",
-                    f"/home/ronny/gps-record/{filename}",
-                )
-                shutil.copy(
-                    "/home/ronny/gps-geodesi/output.nav",
-                    f"/home/ronny/gps-record/{filename_nav}",
-                )
+                shutil.copy("/home/ronny/gps-geodesi/output.obs",f"/home/ronny/gps-record/{filename}")
+                shutil.copy("/home/ronny/gps-geodesi/output.nav",f"/home/ronny/gps-record/{filename_nav}")
                 new_access_token = get_access_token_from_refresh_token(
                     refresh_token, app_key, app_secret
                 )
@@ -380,12 +350,8 @@ def start_base():
                 dropbox_destination_path_nav = f"/GPS ZED-F9P/Base/{filename_nav}"  # Path in Dropbox where you want to upload
                 ref = db.reference(f"/Realtime/base/")
                 data = {f"status": "Uploading...."}
-                upload_file_to_dropbox(
-                    local_file_path, dropbox_destination_path, new_access_token
-                )
-                upload_file_to_dropbox(
-                    local_file_path_nav, dropbox_destination_path_nav, new_access_token
-                )
+                upload_file_to_dropbox(local_file_path, dropbox_destination_path, new_access_token)
+                upload_file_to_dropbox(local_file_path_nav, dropbox_destination_path_nav, new_access_token)
                 print("Success Send to Dropbox")
                 ref = db.reference(f"/Realtime/base")
                 data = {
