@@ -30,6 +30,7 @@ baud_rate = "115200"
 output_raw_file = "/home/ronny/gps-geodesi/output.ubx"
 output_rinex_file = "/home/ronny/gps-geodesi/output.obs"
 output_rinex_file_nav = "/home/ronny/gps-geodesi/output.nav"
+tcp_port = 9000
 
 ref = db.reference("Realtime")
 data = ref.child("base").get()
@@ -73,21 +74,30 @@ def send_ubx_message(ser, message):
     print(f"Sent: {message.hex()}")
 
 
-def collect_raw_data(duration, ntrip):
+# def collect_raw_data(duration, ntrip):
+def collect_raw_data(duration):
+
     """
     Collect raw GNSS data from ZED-F9P using RTKLIB's str2str.
     """
     print("Collecting raw data from ZED-F9P...")
+    # str2str_command = [
+    #     f"str2str",
+    #     "-in",
+    #     f"{device_port}",
+    #     "-out",
+    #     ntrip,
+    #     "-out",
+    #     f"file://{output_raw_file}",
+    #     "-msg",
+    #     "1003,1004,1005,1011,1012,1019,1020,1045,1044,1046,1074,1084,1094,1124,1077,1087,1097,1127",
+    # ]
     str2str_command = [
         f"str2str",
-        "-in",
-        f"{device_port}",
-        "-out",
-        ntrip,
-        "-out",
-        f"file://{output_raw_file}",
-        "-msg",
-        "1003,1004,1005,1011,1012,1019,1020,1045,1044,1046,1074,1084,1094,1124,1077,1087,1097,1127",
+        "-in", f"serial:///ttyGPS:115200:8:n:1",
+        "-out", f"tcpsvr://:{tcp_port}",
+        "-out", f"file://{output_raw_file}",
+        "-msg", "1003,1004,1011,1012,1019,1020,1045,1044,1046,1074,1084,1094,1124,1077,1087,1097,1127"
     ]
 
     try:
@@ -110,7 +120,7 @@ def convert_to_rinex():
     """
     print("Converting raw data to RINEX format...")
     # convbin_command = ["convbin","-v","2.11","-o",f"{output_rinex_file}","-f","1","-f","2",f"{output_raw_file}","-r","rtcm3",]
-    convbin_command = ["convbin","-v","2.11","-o",f"{output_rinex_file}","-r","rtcm3", f"{output_raw_file}"]
+    convbin_command = ["convbin", "-v", "2.11", "-o", f"{output_rinex_file}","-r","rtcm3", f"{output_raw_file}"]
 
     try:
         subprocess.run(convbin_command, check=True)
