@@ -74,31 +74,28 @@ def send_ubx_message(ser, message):
     print(f"Sent: {message.hex()}")
 
 
-# def collect_raw_data(duration, ntrip):
-def collect_raw_data(duration):
+def collect_raw_data(duration, ntrip):
+# def collect_raw_data(duration):
 
     """
     Collect raw GNSS data from ZED-F9P using RTKLIB's str2str.
     """
     print("Collecting raw data from ZED-F9P...")
-    # str2str_command = [
-    #     f"str2str",
-    #     "-in",
-    #     f"{device_port}",
-    #     "-out",
-    #     ntrip,
-    #     "-out",
-    #     f"file://{output_raw_file}",
-    #     "-msg",
-    #     "1003,1004,1005,1011,1012,1019,1020,1045,1044,1046,1074,1084,1094,1124,1077,1087,1097,1127",
-    # ]
     str2str_command = [
         f"str2str",
+        # "-in", f"{device_port}",
         "-in", f"serial:///ttyGPS:115200:8:n:1",
-        "-out", f"tcpsvr://:{tcp_port}",
+        "-out", ntrip,
         "-out", f"file://{output_raw_file}",
-        "-msg", "1003,1004,1011,1012,1019,1020,1045,1044,1046,1074,1084,1094,1124,1077,1087,1097,1127"
+        "-msg", "1003,1004,1005,1011,1012,1019,1020,1045,1044,1046,1074,1084,1094,1124,1077,1087,1097,1127",
     ]
+    # str2str_command = [
+    #     f"str2str",
+    #     "-in", f"serial:///ttyGPS:115200:8:n:1",
+    #     "-out", f"tcpsvr://:{tcp_port}",
+    #     "-out", f"file://{output_raw_file}",
+    #     "-msg", "1003,1004,1011,1012,1019,1020,1045,1044,1046,1074,1084,1094,1124,1077,1087,1097,1127"
+    # ]
 
     try:
         subprocess.run(str2str_command, check=True, timeout=duration)
