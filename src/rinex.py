@@ -372,10 +372,10 @@ def start_base():
                 new_access_token = get_access_token_from_refresh_token(
                     refresh_token, app_key, app_secret
                 )
-                local_file_path = "/home/ronny/gps-geodesi/output1.obs"
-                local_file_path_nav = "/home/ronny/gps-geodesi/output1.nav"
-                # local_file_path = "/home/ronny/gps-geodesi/output.obs"
-                # local_file_path_nav = "/home/ronny/gps-geodesi/output.nav"  # Path to your local .txt file
+                # local_file_path = "/home/ronny/gps-geodesi/output1.obs"
+                # local_file_path_nav = "/home/ronny/gps-geodesi/output1.nav"
+                local_file_path = "/home/ronny/gps-geodesi/output.obs"
+                local_file_path_nav = "/home/ronny/gps-geodesi/output.nav"  # Path to your local .txt file
                 dropbox_destination_path = f"/GPS ZED-F9P/Base/{filename}"
                 dropbox_destination_path_nav = f"/GPS ZED-F9P/Base/{filename_nav}"  # Path in Dropbox where you want to upload
                 ref = db.reference(f"/Realtime/base/")
